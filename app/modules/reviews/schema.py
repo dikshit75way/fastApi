@@ -1,17 +1,18 @@
 from pydantic import BaseModel 
 from datetime import datetime
 
-class PurchaseCreate(BaseModel):
-    buyer_id : int 
+class ReviewCreate(BaseModel):
+    user_id : int 
     project_id : int 
+    rating : int 
+    comment : str 
 
-class PurchaseOut(BaseModel):
+class ReviewOut(BaseModel):
     id : int 
-    buyer_id : int 
+    user_id : int 
     project_id : int 
-    amount : int 
-    status : str 
-    commission : int 
+    rating : int 
+    comment : str 
     created_at : datetime
 
     class Config:

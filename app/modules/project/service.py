@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select
 from app.modules.project.model import Project
 from app.modules.project.schema import ProjectBase
-from fastapi import HTTPException, status
+from app.modules.project.validation import validate_project_exists, validate_project_owner
 
 async def create_project(db: AsyncSession, title: str, description: str, price: int, user_id: int, zip_path: str):
     project = Project(
@@ -25,35 +25,25 @@ async def get_all_projects(db:AsyncSession):
 
 
 async def get_project_by_id(db:AsyncSession , project_id:int):
-    result = await db.execute(select(Project).where(Project.id == project_id))
-    return result.scalar_one_or_none()
+    return await validate_project_exists(db, project_id)
 
 async def update_project(db: AsyncSession, project_id: int, payload: ProjectBase, user_id: int):
-    result = await db.execute(select(Project).where(Project.id == project_id))
-    project = result.scalar_one_or_none()
-    if not project:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
-    
-    if project.owner_id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this project")
+    project = await validate_project_exists(db, project_id)
+    validate_project_owner(project, user_id)
 
     project.title = payload.title
     project.description = payload.description
     project.price = payload.price
     project.zip_path = payload.zip_path
+    
     await db.commit()
     await db.refresh(project)
     return project
 
 
 async def delete_project(db: AsyncSession, project_id: int, user_id: int):
-    result = await db.execute(select(Project).where(Project.id == project_id))
-    project = result.scalar_one_or_none()
-    if not project:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
-    
-    if project.owner_id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this project")
+    project = await validate_project_exists(db, project_id)
+    validate_project_owner(project, user_id)
     
     await db.delete(project)
     await db.commit()
@@ -65,16 +55,8 @@ async def attach_zip_to_project(
     user_id: int,
     zip_path: str
 ):
-    result = await db.execute(
-        select(Project).where(Project.id == project_id)
-    )
-    project = result.scalar_one_or_none()
-
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-
-    if project.owner_id != user_id:
-        raise HTTPException(status_code=403, detail="Not project owner")
+    project = await validate_project_exists(db, project_id)
+    validate_project_owner(project, user_id)
 
     project.zip_path = zip_path
     await db.commit()

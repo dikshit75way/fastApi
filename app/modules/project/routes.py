@@ -9,7 +9,7 @@ from app.modules.project.service import (
     delete_project ,
     attach_zip_to_project
 )
-from app.core.jwt import get_current_user
+from app.core.jwt import user_required
 from app.modules.project.schema import ProjectOut, ProjectBase 
 from app.core.storage import save_zip_file
 
@@ -22,7 +22,7 @@ async def create_project_endpoint(
     price: int = Form(...),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(user_required)
 ):
     # Save the ZIP file first
     zip_path = save_zip_file(file)
@@ -55,7 +55,7 @@ async def update_project_endpoint(
     project_id: int,
     payload: ProjectBase,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(user_required)
 ):
     return await update_project(db, project_id, payload, current_user.get("user_id"))
 
@@ -63,7 +63,7 @@ async def update_project_endpoint(
 async def delete_project_endpoint(
     project_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(user_required)
 ):
     return await delete_project(db, project_id, current_user.get("user_id"))
 
@@ -73,7 +73,7 @@ async def upload_project_zip(
     project_id: int,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(user_required)
 ):
     zip_path = save_zip_file(file)
 

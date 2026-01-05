@@ -31,12 +31,18 @@ def get_current_user(token:str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Invalid authentication credentials")
     return payload
 
+class RoleChecker:
+    def __init__(self, allowed_roles: list[str]):
+        self.allowed_roles = allowed_roles
 
+    def __call__(self, current_user: dict = Depends(get_current_user)):
+        if current_user.get("role") not in self.allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough permissions"
+            )
+        return current_user
 
-def get_admin_user(current_user: dict = Depends(get_current_user)):
-    if current_user.get("role") != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
-        )
-    return current_user
+# Predefined dependencies for convenience
+admin_required = RoleChecker(["admin"])
+user_required = RoleChecker(["user", "admin"])
