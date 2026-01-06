@@ -6,6 +6,7 @@ from app.modules.project.validation import validate_project_exists, validate_pro
 from sqlalchemy.orm import selectinload
 
 async def create_project(db: AsyncSession, title: str, description: str, price: int, user_id: int, zip_path: str, image_paths: list[str] = []):
+    print("debbug the file data form the frontend :" , zip_path)
     project = Project(
         title=title,
         description=description,

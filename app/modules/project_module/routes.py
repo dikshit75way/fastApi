@@ -5,7 +5,7 @@ from app.modules.project_module.service import create_project_module , get_all_p
 from app.modules.project_module.schema import ProjectModuleCreate
 
 
-router = APIRouter(prefix="/project_module", tags=["project_module"])
+router = APIRouter(prefix="/modules", tags=["project_module"])
 
 @router.post("/", response_model=ProjectModuleCreate)
 async def create_project_module_endpoint(

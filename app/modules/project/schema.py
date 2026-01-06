@@ -23,6 +23,8 @@ class ProjectOut(BaseModel):
     price: int
     owner_id: int
     zip_path: Optional[str] = None
+    avgRating: Optional[int] = None
+    ratingCount: Optional[int] = None
     created_at: datetime
     images: List[ProjectImageOut] = []
     

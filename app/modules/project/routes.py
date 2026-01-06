@@ -14,7 +14,7 @@ from app.core.jwt import user_required
 from app.modules.project.schema import ProjectOut, ProjectBase 
 from app.core.storage import save_zip_file, save_image_file
 
-router = APIRouter(prefix="/project", tags=["project"])
+router = APIRouter(prefix="/projects", tags=["project"])
 
 @router.post("/", response_model=ProjectOut)
 async def create_project_endpoint(
@@ -27,6 +27,7 @@ async def create_project_endpoint(
     current_user: dict = Depends(user_required)
 ):
     # Save the ZIP file first
+    print("debbug the file data form the frontend :" , file)
     zip_path = save_zip_file(file)
 
     # Validate and save images

@@ -12,6 +12,8 @@ class Project(Base):
     price = Column(Integer, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"))
     zip_path = Column(String(255), nullable=True)
+    avgRating = Column(Integer, nullable=True , default=0)
+    ratingCount = Column(Integer, nullable=True , default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationship to multiple images

@@ -18,5 +18,17 @@ class UserOut(BaseModel):
         orm_mode = True
 
 class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+    accessToken: str
+    refreshToken: str
+
+class RefreshTokenRequest(BaseModel):
+    refreshToken: str
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class LoginResponse(BaseModel):
+    user: UserOut
+    accessToken: str
+    refreshToken: str

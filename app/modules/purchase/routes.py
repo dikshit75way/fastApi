@@ -5,9 +5,17 @@ from typing import List
 from app.core.database import get_db
 from app.core.jwt import user_required
 from app.modules.purchase.schema import PurchaseCreate, PurchaseOut
-from app.modules.purchase.service import create_purchase, get_purchases
+from app.modules.purchase.service import create_purchase, get_purchases, has_purchased
 
 router = APIRouter(prefix="/purchases", tags=["purchases"])
+
+@router.get("/has-purchased", response_model=bool)
+async def check_has_purchased(
+    project_id: int,
+    user_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    return await has_purchased(db, project_id, user_id)
 
 @router.post("/", response_model=PurchaseOut, status_code=status.HTTP_201_CREATED)
 async def buy_project(
