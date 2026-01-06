@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
+from typing import List
 from app.modules.project.service import (
     create_project, 
     get_all_projects, 
@@ -11,7 +12,7 @@ from app.modules.project.service import (
 )
 from app.core.jwt import user_required
 from app.modules.project.schema import ProjectOut, ProjectBase 
-from app.core.storage import save_zip_file
+from app.core.storage import save_zip_file, save_image_file
 
 router = APIRouter(prefix="/project", tags=["project"])
 
@@ -21,20 +22,34 @@ async def create_project_endpoint(
     description: str = Form(...),
     price: int = Form(...),
     file: UploadFile = File(...),
+    images: List[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(user_required)
 ):
     # Save the ZIP file first
     zip_path = save_zip_file(file)
+
+    # Validate and save images
+    image_paths = []
+    if images:
+        if len(images) > 5:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Maximum 5 images allowed"
+            )
+        for img in images:
+            path = save_image_file(img)
+            image_paths.append(path)
     
-    # Create the project with the zip_path
+    # Create the project with the zip_path and image_paths
     return await create_project(
         db, 
         title, 
         description, 
         price, 
         current_user.get("user_id"), 
-        zip_path
+        zip_path,
+        image_paths
     )
 
 @router.get("/", response_model=list[ProjectOut])

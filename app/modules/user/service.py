@@ -34,50 +34,9 @@ async def authenticate_user(db: AsyncSession, email: str, password: str):
 
 async def get_user_by_id(db: AsyncSession, user_id: int):
     result = await db.execute(select(User).where(User.id == user_id))
-    return result.scalars().first()
-
-async def debit_wallet(db:AsyncSession , use_id : int , amount : int):
-    stmt = (
-        update(User)
-        .where(User.id == use_id, User.wallet_balance >= amount)
-        .values(wallet_balance=User.wallet_balance - amount)
-        .returning(User)
-    )
-    result = await db.execute(stmt)
-    user = result.scalar_one_or_none()
-    
-    validate_sufficient_balance(bool(user))
-    
-    await db.commit()
+    user = result.scalars().first()
+    if user and user.wallet_balance is None:
+        user.wallet_balance = 0
     return user
 
-
-async def credit_wallet(
-    db: AsyncSession,
-    user_id: int,
-    amount: int
-):
-    if amount <= 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid amount"
-        )
-
-    stmt = (
-        update(User)
-        .where(User.id == user_id)
-        .values(wallet_balance=User.wallet_balance + amount)
-        .returning(User)
-    )
-
-    result = await db.execute(stmt)
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-
-    await db.commit()
     return user

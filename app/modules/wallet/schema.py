@@ -19,3 +19,23 @@ class WalletOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class Widhdraw(BaseModel):
+    user_id : int 
+    amount : int
+
+
+class WidhdrawOut(BaseModel):
+    id : int 
+    user_id : int 
+    amount : int 
+    created_at : datetime
+
+    class Config:
+        from_attributes = True
+
+
+class WalletAdd(BaseModel):
+    user_id : int 
+    amount : int

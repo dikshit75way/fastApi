@@ -4,7 +4,7 @@ from alembic import context
 
 from app.core.database import Base
 from app.modules.user.models import User
-from app.modules.project.model import Project
+from app.modules.project.model import Project, ProjectImage
 from app.modules.purchase.model import Purchase
 from app.modules.wallet.model import Wallet
 from app.modules.reviews.model import Review

@@ -1,10 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.modules.project.model import Project
+from app.modules.project.model import Project, ProjectImage
 from app.modules.project.schema import ProjectBase
 from app.modules.project.validation import validate_project_exists, validate_project_owner
+from sqlalchemy.orm import selectinload
 
-async def create_project(db: AsyncSession, title: str, description: str, price: int, user_id: int, zip_path: str):
+async def create_project(db: AsyncSession, title: str, description: str, price: int, user_id: int, zip_path: str, image_paths: list[str] = []):
     project = Project(
         title=title,
         description=description,
@@ -14,13 +15,24 @@ async def create_project(db: AsyncSession, title: str, description: str, price: 
     )
 
     db.add(project)
+    await db.flush() # Flush to get project.id
+
+    # Add images
+    for path in image_paths:
+        img = ProjectImage(project_id=project.id, image_path=path)
+        db.add(img)
+
     await db.commit()
     await db.refresh(project)
-    return project
-
+    
+    # Reload with images
+    result = await db.execute(
+        select(Project).where(Project.id == project.id).options(selectinload(Project.images))
+    )
+    return result.scalar_one()
 
 async def get_all_projects(db:AsyncSession):
-    result = await db.execute(select(Project))
+    result = await db.execute(select(Project).options(selectinload(Project.images)))
     return result.scalars().all()
 
 

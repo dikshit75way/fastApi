@@ -5,8 +5,7 @@ from app.modules.purchase.schema import PurchaseCreate
 from app.modules.purchase.validation import validate_purchase_not_self
 from app.modules.project.service import get_project_by_id as get_project
 from fastapi import HTTPException, status
-from app.modules.user.service import debit_wallet , credit_wallet
-from app.modules.wallet.service import create_wallet_transaction
+from app.modules.wallet.service import debit_funds, credit_funds
 
 async def create_purchase(db:AsyncSession, payload:PurchaseCreate):
     admin_id = 7
@@ -17,9 +16,8 @@ async def create_purchase(db:AsyncSession, payload:PurchaseCreate):
     commission = int(project.price * commissionRate)
     seller_amount = project.price - commission
 
-    # debit_wallet handles its own internal validation (funds check)
-    await debit_wallet(db, payload.buyer_id, project.price)
-    
+    # Ledger entries are automatically created by debit_funds and credit_funds
+    # This purchase record serves as the reference for all 3 entries
     purchase_record = Purchase(
         buyer_id=payload.buyer_id,
         project_id=payload.project_id,
@@ -28,19 +26,16 @@ async def create_purchase(db:AsyncSession, payload:PurchaseCreate):
         status="purchased"
     )
     db.add(purchase_record)
+    await db.flush() # Flush to get purchase_record.id
+
+    # 1. Debit buyer
+    await debit_funds(db, payload.buyer_id, project.price, source="purchase", reference_id=purchase_record.id)
     
-    await credit_wallet(db, project.owner_id, seller_amount)
-    await credit_wallet(db, admin_id, commission)
+    # 2. Credit seller
+    await credit_funds(db, project.owner_id, seller_amount, source="sale", reference_id=purchase_record.id)
     
-    walletpayload = {
-        "buyer_id": payload.buyer_id,
-        "seller_id": project.owner_id,
-        "admin_id": admin_id,
-        "purchase_id": purchase_record.id,
-        "amount": project.price,
-        "commission": commission
-    }
-    await create_wallet_transaction(db, walletpayload)
+    # 3. Credit admin (commission)
+    await credit_funds(db, admin_id, commission, source="commission", reference_id=purchase_record.id)
     
     await db.commit()
     await db.refresh(purchase_record)
