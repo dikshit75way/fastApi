@@ -1,18 +1,17 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, exists
 from app.modules.purchase.model import Purchase
-from app.modules.project.model import Project
 from app.modules.purchase.schema import PurchaseCreate
 from app.modules.purchase.validation import validate_purchase_not_self
-from app.modules.project.validation import validate_project_exists
+from app.modules.project.service import get_project_by_id as get_project
 from fastapi import HTTPException, status
 from app.modules.user.service import debit_wallet , credit_wallet
 from app.modules.wallet.service import create_wallet_transaction
 
 async def create_purchase(db:AsyncSession, payload:PurchaseCreate):
     admin_id = 7
-    project = await validate_project_exists(db, payload.project_id)
-    validate_purchase_not_self(project, payload.buyer_id)
+    project = await get_project(db, payload.project_id)
+    validate_purchase_not_self(project.owner_id, payload.buyer_id)
 
     commissionRate = 0.1 
     commission = int(project.price * commissionRate)

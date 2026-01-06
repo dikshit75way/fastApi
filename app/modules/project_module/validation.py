@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.modules.project_module.model import ProjectModule
-from app.modules.project.model import Project
+from app.modules.project.service import get_project_by_id as get_project
 
 async def validate_project_module_exists(db: AsyncSession, project_module_id: int, owner_id: int) -> ProjectModule:
     """
@@ -20,13 +20,10 @@ async def validate_project_module_exists(db: AsyncSession, project_module_id: in
             detail="Project module not found"
         )
     
-    # Verify ownership via the parent project
-    result = await db.execute(
-        select(Project).where(Project.id == project_module.project_id)
-    )
-    project = result.scalar_one_or_none()
+    # Verify ownership via the parent project service
+    project = await get_project(db, project_module.project_id)
     
-    if not project or project.owner_id != owner_id:
+    if project.owner_id != owner_id:
          raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="Not authorized to modify this project module"
