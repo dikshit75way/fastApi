@@ -27,9 +27,7 @@ def run_migrations_offline():
 
 def run_migrations_online():
     connectable = engine_from_config(
-        {
-            "sqlalchemy.url": settings.DATABASE_URL_SYNC
-        },
+        {"sqlalchemy.url": settings.DATABASE_URL_SYNC},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
@@ -37,7 +35,7 @@ def run_migrations_online():
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
-            target_metadata=target_metadata
+            target_metadata=target_metadata,
         )
 
         with context.begin_transaction():
