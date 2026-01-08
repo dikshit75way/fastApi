@@ -1,10 +1,11 @@
+
 from datetime import datetime, timedelta
 from jose import JWTError , jwt
 from app.core.config import settings
 from fastapi import Depends , HTTPException , status
 from fastapi.security import OAuth2PasswordBearer
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
@@ -28,12 +29,15 @@ def verify_access_token(token:str)->str:
     try:
         payload = jwt.decode(token,SECRET_KEY,algorithms=[ALGORITHM])
         return payload
-    except JWTError:
+    except JWTError as e:
+        print(f"JWT Validation Error: {e}")
         return None
 
 
 def get_current_user(token:str = Depends(oauth2_scheme)):
+    print("token debbug " , token)
     payload = verify_access_token(token)
+    print("payload in jwt middleware " , payload)
     if not payload or payload.get("type") != "access":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
