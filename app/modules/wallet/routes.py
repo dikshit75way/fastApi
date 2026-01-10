@@ -31,4 +31,5 @@ async def list_transactions(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(user_required)
 ):
+    print("we are hititng the list_transactions routes")
     return await walletController.list_transactions(db, current_user.get("user_id"))
